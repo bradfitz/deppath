@@ -21,6 +21,10 @@ match rather than an exact package name.
 	os.Exit(1)
 }
 
+var (
+	tags = flag.String("tags", "", "optional comma-separated build tags")
+)
+
 func main() {
 	flag.Usage = usage
 	flag.Parse()
@@ -29,8 +33,13 @@ func main() {
 	}
 	from, to := flag.Arg(0), flag.Arg(1)
 
+	var buildFlags []string
+	if *tags != "" {
+		buildFlags = append(buildFlags, "-tags", *tags)
+	}
 	cfg := &packages.Config{
-		Mode: packages.NeedImports,
+		Mode:       packages.NeedImports,
+		BuildFlags: buildFlags,
 	}
 	pkgs, err := packages.Load(cfg, from)
 	if err != nil {
