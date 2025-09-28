@@ -23,6 +23,7 @@ match rather than an exact package name.
 
 var (
 	tags = flag.String("tags", "", "optional comma-separated build tags")
+	tail = flag.Bool("tail", false, "print only the last element of each path")
 )
 
 func main() {
@@ -68,6 +69,7 @@ func main() {
 	var stack []string
 	var uselessRoot = map[string]bool{} // import path => true
 	var visit func(string)
+	var stackSeen = map[string]bool{}
 	visit = func(pkgName string) {
 		if uselessRoot[pkgName] {
 			return
@@ -82,7 +84,15 @@ func main() {
 		}()
 
 		if pkgName == to || (strings.HasPrefix(to, "/") && strings.Contains(pkgName, to[1:])) {
-			matches = append(matches, fmt.Sprintf("%q", stack))
+			frames := stack
+			if *tail && len(frames) > 2 {
+				frames = frames[len(frames)-2:]
+			}
+			stackStr := fmt.Sprintf("%q", frames)
+			if !stackSeen[stackStr] {
+				stackSeen[stackStr] = true
+				matches = append(matches, stackStr)
+			}
 			return
 		}
 		pkg, ok := pkgMap[pkgName]
